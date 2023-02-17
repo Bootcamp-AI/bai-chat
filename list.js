@@ -67,9 +67,9 @@ const setUserMsg = async(fecha, from, msg_body, estado)=>{
 	}catch(err){console.log(err)}
 }
 
-const updateUser = async(status, from)=>{
+const updateUser = async(boton, status, from)=>{
 	try{
-	const [rows] = await pool.query('UPDATE usuario SET estado=?  WHERE celular=?', [status, from]);
+	const [rows] = await pool.query('UPDATE usuario SET boton=?, estado=?  WHERE celular=?', [boton, status, from]);
 	}catch(err){console.log(err)}
 
 }
@@ -276,12 +276,15 @@ const ZDGConnection = async()=>{
 
 		if(dataUser.length > 0){
 			var status = dataUser[0].estado;
+			var botonUsuario = dataUser[0].botonUsuario;
 			console.log("Status: "+status);
 		}
 
 		if(msg_body !== "" &&  msg_body !== undefined && msg_body !== "Iniciar conversación" && 
 			dataUser.length > 0 && status == "Activo"){
 				
+
+
 				console.log("Aqui: "+msg_body)
 				const buttons11 = [
 				  {buttonId: 'id1', buttonText: {displayText: 'Iniciar conversación'}, type: 1}			  
@@ -339,7 +342,8 @@ const ZDGConnection = async()=>{
 		if(msg_body == "Iniciar conversación"){
 
 			const estado = "Inicio"
-			await updateUser(estado, from);
+			const boton = msg_body
+			await updateUser(boton, estado, from);
 
 	    	ZDGSendMessage(jid, {text: "Hola, cuentame cómo te puedo ayudar?"})
 					.then(result => console.log('RESULT: ', "Inicio conversación enviado."))
@@ -358,8 +362,9 @@ const ZDGConnection = async()=>{
 
 
 		
-		if(msg_body !== undefined && msg_body !== "" && status =="Inicio" && dataUser.length>0 && 
-			msg_body !== "Iniciar conversación" && msg_body !== "Guía de uso"){
+		if(msg_body !== undefined && msg_body !== ""  && dataUser.length>0 && 
+			msg_body !== "Iniciar conversación" && msg_body !== "Guía de uso" && (status =="Inicio" || 
+				status =="Inicio2") ){
 			function padTo2Digits(num) {
 			  return num.toString().padStart(2, '0');
 			}
@@ -377,19 +382,22 @@ const ZDGConnection = async()=>{
 			const fecha = formatDate(new Date())+" "+new Date().getHours()+":"+new Date().getMinutes()
 			console.log("fecha: "+fecha)
 
-			const estado = "Inicio"
+			const estado = "Inicio2"
 			await setUserMsg(fecha, from, msg_body, estado);
 
 			const dataChat = await getChatgpt(msg_body)
 			console.log("dataChat: "+dataChat)
 	    	ZDGSendMessage(jid, {text: dataChat})
-
+					.then(result => console.log('RESULT: ', "Inicio conversación enviado."))
+					.catch(error=> console.log('Error: ', error))		
 			}
 
-		if(msg_body !== undefined && msg_body !== "" && status == "Inicio"){
+		if(msg_body !== undefined && status == "Activo"){
+
+			console.log("-------Olvido Ant----------")
 
 			//Olvido sesión después de 10 minutos.
-			delay1(600000).then(async function(){
+			delay1(1800000).then(async function(){
 			console.log("-----------Olvido--------------")
 			const status = "Activo";
 			await updateUser(status, from);
