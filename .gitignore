@@ -1,5 +1,5 @@
 node_modules/
 assets/
-.env/
+.env
 zdg2/
 data.sql/
